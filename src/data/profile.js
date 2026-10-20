@@ -49,7 +49,7 @@ export const philosophy = {
   image: "/images/philosophy-bg.jpg",
   imageAlt: "Atmospheric dark cinematic background",
   statement:
-    "I believe great interfaces are built one reusable component at a time — responsive on every screen, clean in architecture, and always learning from the next problem to solve.",
+    "I believe great interfaces are built one reusable component at a time — responsive on every screen, clean in architecture, and continuously improving with every problem I solve.",
 };
 
 export const projectsIntro = {

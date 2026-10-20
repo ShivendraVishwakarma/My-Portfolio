@@ -1,9 +1,9 @@
 {
-  "name": "nitish-portfolio",
+  "name": "shivendra-portfolio",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Personal portfolio of Nitish Narayan Singh, Software Engineer, built with React, GSAP, Lenis, framer-motion and Three.js.",
+  "description": "Personal portfolio of Shivendra, Software Engineer, built with React, GSAP, Lenis, framer-motion and Three.js.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
