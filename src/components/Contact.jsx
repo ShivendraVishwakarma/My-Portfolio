@@ -37,6 +37,7 @@ const iconProps = {
 
 export default function Contact() {
   const sectionRef = useRef(null);
+  const submittingRef = useRef(false);
   const [form, setForm] = useState(emptyForm);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
@@ -61,19 +62,29 @@ export default function Contact() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (submittingRef.current) return;
     if (form.honeypot) return;
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const message = form.message.trim();
+    if (!name || !email || !message || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setStatus("error");
+      setError("Please enter your name, a valid email address, and a message.");
+      return;
+    }
+    submittingRef.current = true;
     setStatus("loading");
     setError("");
     try {
       if (CONTACT_ENDPOINT) {
         const res = await fetch(CONTACT_ENDPOINT, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ name, email, message }),
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || data.success === false) {
-          throw new Error(data.error || "Failed to send message. Please try again.");
+        const data = await res.json().catch(() => null);
+        if (!res.ok || data?.success === false || data?.ok === false) {
+          throw new Error(data?.errors?.map((item) => item.message).join(" ") || data?.error || "The contact service could not accept your message. Please try again.");
         }
       } else {
         window.location.href = mailtoLink(form);
@@ -83,7 +94,11 @@ export default function Contact() {
     } catch (err) {
       console.error("Submission error:", err);
       setStatus("error");
-      setError(err.message || "An unexpected error occurred.");
+      setError(err instanceof TypeError
+        ? "Could not reach the contact service. Check your connection and try again, or email directly."
+        : err.message || "An unexpected error occurred. Please try again or email directly.");
+    } finally {
+      submittingRef.current = false;
     }
   };
 
