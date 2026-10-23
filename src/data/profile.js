@@ -21,7 +21,7 @@ export const socials = [
   {
     label: "LinkedIn",
     href: "https://www.linkedin.com/in/shivendravishwakarma/",
-    icon: "https://api.iconify.design/simple-icons:linkedin.svg?color=%23ffffff",
+    icon: "/icons/linkedin.svg",
   },
   {
     label: "LeetCode",
