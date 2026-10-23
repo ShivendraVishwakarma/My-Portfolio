@@ -28,8 +28,28 @@ npm run build    # production build in dist/
 
 ## Editing content
 
-All copy and links are in [`src/data/profile.js`](src/data/profile.js). Coding-profile numbers (LeetCode, CodeChef, GitHub) are a snapshot in `codingProfiles` — update them there.
+All copy and links are in [`src/data/profile.js`](src/data/profile.js). CodeChef and GitHub numbers remain snapshots there. LeetCode uses validated public data from `public/data/leetcode.json` when available and falls back to the existing values in `codingProfiles`.
 Images live in `public/images` (philosophy backdrop, currently a placeholder) and `public/projects` (project covers).
+
+## LeetCode statistics sync
+
+The GitHub Actions workflow in `.github/workflows/update-leetcode.yml` requests public LeetCode statistics once daily at **07:17 UTC**. It also supports a manual run from **Actions → Sync LeetCode public statistics → Run workflow**. Scheduled runs may be delayed by GitHub. Changed JSON is committed by the workflow so a connected Vercel or Netlify deployment can publish it; unchanged data creates no commit.
+
+The updater in `scripts/update-leetcode.mjs` queries LeetCode GraphQL without authentication. It validates the total and Easy, Medium, and Hard counts, then requests calendar data separately for the current and previous year. Calendar data is saved only if both responses contain valid timestamp-to-count maps. Requests have a 15-second timeout. If the counts request fails or is invalid, the updater exits without changing the JSON. If counts are valid but the calendar request fails, counts can still be updated while the previous validated calendar is retained.
+
+### Real calendar versus activity preview
+
+When a real calendar has been fetched and validated, the portfolio displays it with real streak, active-day, and best-day calculations, plus a **Last synced** date. If no valid calendar has been saved, the existing filled heatmap remains as an **Activity preview**. Its deterministic generated squares and derived summary statistics are illustrative and do not represent LeetCode submissions. It is never labeled “live.” A last-known-good real calendar takes priority over the preview if a later calendar sync fails.
+
+At the time this integration was prepared, LeetCode returned public solved counts for this profile but denied anonymous calendar access with `no permission to check the calendar`. The heatmap therefore starts in preview mode until a future sync can retrieve and validate a calendar. The old browser-side Heroku request has been removed; visitors load only this site's JSON.
+
+### Setup, credentials, and troubleshooting
+
+Push the workflow, updater, and `public/data/leetcode.json` to the repository, ensure GitHub Actions is enabled, and allow the workflow to write repository contents. The workflow needs only `contents: write` so it can publish a changed JSON file. It needs no LeetCode or GitHub secret. Run it manually from the Actions page to check the current result. The logs report validated counts, calendar success or failure, and when a prior calendar is retained.
+
+The workflow and updater plus `public/data/leetcode.json` are safe to commit; that JSON contains public profile data. Never commit LeetCode cookies, session tokens, passwords, private credentials, or local secret files. Do not put private credentials in React source or `VITE_` variables.
+
+If counts remain at the profile fallback, inspect the workflow logs for request or validation errors. If the heatmap says **Activity preview**, no valid real calendar is present in the JSON; LeetCode may deny anonymous access, rate-limit requests, or change its unofficial GraphQL behavior. If the workflow reports a JSON change but the site remains old, check that the static deployment completed. These updates are scheduled, not real-time.
 
 ## Contact form
 

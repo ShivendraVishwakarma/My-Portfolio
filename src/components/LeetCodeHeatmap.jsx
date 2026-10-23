@@ -8,27 +8,44 @@ function getMondayOffset(date) {
   return (d.getDay() + 6) % 7; // Mon=0 … Sun=6
 }
 
-function buildGrid(submissionMap) {
+function buildGrid(submissionMap, calendarYears = null) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const rawStart = new Date(today);
   rawStart.setDate(today.getDate() - 363);
-  const startOffset = getMondayOffset(rawStart);
-  const gridStart = new Date(rawStart);
-  gridStart.setDate(rawStart.getDate() - startOffset);
+  let start = rawStart;
+  let end = today;
+  let gridStart;
+  if (calendarYears) {
+    const coverageStart = new Date(calendarYears[0], 0, 1);
+    const coverageEnd = new Date(calendarYears[calendarYears.length - 1], 11, 31);
+    if (coverageEnd < end) end = coverageEnd;
+    if (coverageStart > start) start = coverageStart;
+    if (start > end) return [];
+    gridStart = new Date(start);
+    gridStart.setDate(start.getDate() - getMondayOffset(start));
+  } else {
+    const startOffset = getMondayOffset(rawStart);
+    gridStart = new Date(rawStart);
+    gridStart.setDate(rawStart.getDate() - startOffset);
+  }
 
   const days = [];
   for (let i = 0; i < 371; i++) {
     const d = new Date(gridStart);
     d.setDate(gridStart.getDate() + i);
-    if (d > today) break;
+    if (d > end) break;
+    if (d < start) {
+      days.push({ date: d, count: 0, covered: false });
+      continue;
+    }
     const ts = Math.floor(d.getTime() / 1000);
     const utcMidnight = Math.floor(
       Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 1000
     );
     const count = submissionMap[ts] ?? submissionMap[utcMidnight] ?? 0;
-    days.push({ date: d, count });
+    days.push({ date: d, count, covered: true });
   }
   return days;
 }
@@ -110,67 +127,42 @@ const CELL = 13;
 const GAP = 3;
 
 // ─── Component ───────────────────────────────────────────────────────────────
-export default function LeetCodeHeatmap({ solvedCount = 130 }) {
+export default function LeetCodeHeatmap({
+  solvedCount = 130,
+  calendar = null,
+  calendarYears = null,
+  calendarFetchedAt = null,
+}) {
   const [days, setDays] = useState([]);
   const [monthLabels, setMonthLabels] = useState([]);
   const [streak, setStreak] = useState(0);
   const [totalActive, setTotalActive] = useState(0);
   const [maxDay, setMaxDay] = useState(0);
   const [tooltip, setTooltip] = useState(null);
-  const [isLive, setIsLive] = useState(false);
+  const [isRealCalendar, setIsRealCalendar] = useState(false);
   const wrapRef = useRef(null);
   const cellsRef = useRef([]);
 
   useEffect(() => {
-    async function load() {
-      let map = null;
-      let live = false;
+    const hasRealCalendar = calendar && typeof calendar === "object" && Object.keys(calendar).length > 0;
+    const map = hasRealCalendar ? calendar : generateFallbackData(solvedCount);
+    const grid = buildGrid(map, hasRealCalendar ? calendarYears : null);
 
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(
-          "https://leetcode-stats-api.herokuapp.com/Shivendra22",
-          { signal: controller.signal }
-        );
-        clearTimeout(timer);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.submissionCalendar) {
-            map =
-              typeof json.submissionCalendar === "string"
-                ? JSON.parse(json.submissionCalendar)
-                : json.submissionCalendar;
-            live = true;
-          }
-        }
-      } catch {
-        /* fall through */
-      }
-
-      if (!map) {
-        map = generateFallbackData(solvedCount);
-      }
-
-      const grid = buildGrid(map);
-
-      let s = 0;
-      for (let i = grid.length - 1; i >= 0; i--) {
-        if (grid[i].count > 0) s++;
-        else break;
-      }
-      const active = grid.filter((d) => d.count > 0).length;
-      const mx = Math.max(...grid.map((d) => d.count));
-
-      setDays(grid);
-      setMonthLabels(getMonthLabels(grid));
-      setStreak(s);
-      setTotalActive(active);
-      setMaxDay(mx);
-      setIsLive(live);
+    let s = 0;
+    for (let i = grid.length - 1; i >= 0; i--) {
+      if (grid[i].count > 0) s++;
+      else break;
     }
-    load();
-  }, [solvedCount]);
+    const active = grid.filter((d) => d.count > 0).length;
+    const mx = Math.max(...grid.map((d) => d.count));
+
+    setDays(grid);
+    setMonthLabels(getMonthLabels(grid));
+    setStreak(s);
+    setTotalActive(active);
+    setMaxDay(mx);
+    setIsRealCalendar(Boolean(hasRealCalendar));
+  }, [solvedCount, calendar, calendarYears, calendarFetchedAt]);
 
   // GSAP entrance animation
   useEffect(() => {
@@ -222,12 +214,11 @@ export default function LeetCodeHeatmap({ solvedCount = 130 }) {
         <span>
           <span className="text-white font-semibold">{maxDay}</span> best day
         </span>
-        {isLive && (
-          <span className="ml-auto flex items-center gap-1 text-[10px] text-emerald-400/70">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-            live
-          </span>
-        )}
+        <span className="ml-auto text-[10px] text-ash/70">
+          {isRealCalendar && calendarFetchedAt
+            ? `Last synced ${new Date(calendarFetchedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+            : "Activity preview"}
+        </span>
       </div>
 
       {/* Scrollable heatmap */}
@@ -296,7 +287,7 @@ export default function LeetCodeHeatmap({ solvedCount = 130 }) {
                   {Array.from({ length: 7 }, (_, row) => {
                     const idx = col * 7 + row;
                     const day = days[idx];
-                    if (!day) {
+                    if (!day || day.covered === false) {
                       return (
                         <div key={row} style={{ width: CELL, height: CELL }} />
                       );

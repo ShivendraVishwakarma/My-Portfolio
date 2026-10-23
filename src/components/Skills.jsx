@@ -1,9 +1,44 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "../lib/gsap";
 import { codingProfiles, skills, skillsIntro } from "../data/profile";
 import LeetCodeHeatmap from "./LeetCodeHeatmap";
 
 const josefin = { fontFamily: "var(--font-josefin), 'Josefin Sans', sans-serif" };
+
+function isCount(value) {
+  return Number.isSafeInteger(value) && value >= 0;
+}
+
+function readSyncedData(data) {
+  const candidate = data?.stats;
+  const stats = candidate && [candidate.total, candidate.easy, candidate.medium, candidate.hard].every(isCount) &&
+    candidate.easy + candidate.medium + candidate.hard === candidate.total
+    ? candidate
+    : null;
+
+  let calendar = null;
+  let calendarYears = null;
+  let calendarFetchedAt = null;
+  const years = data?.calendarYears;
+  const validYears = Array.isArray(years) && years.length > 0 && years.every(
+    (year, index) => Number.isInteger(year) && year >= 2000 &&
+      (index === 0 || year === years[index - 1] + 1),
+  );
+  const entries = data?.calendar && typeof data.calendar === "object" && !Array.isArray(data.calendar)
+    ? Object.entries(data.calendar)
+    : [];
+  const validCalendar = validYears && entries.length > 0 && entries.every(([timestamp, count]) => {
+    const seconds = Number(timestamp);
+    return /^\d+$/.test(timestamp) && Number.isSafeInteger(seconds) && seconds > 0 && isCount(count) &&
+      years.includes(new Date(seconds * 1000).getUTCFullYear());
+  }) && typeof data.calendarFetchedAt === "string" && !Number.isNaN(Date.parse(data.calendarFetchedAt));
+  if (validCalendar) {
+    calendar = data.calendar;
+    calendarYears = years;
+    calendarFetchedAt = data.calendarFetchedAt;
+  }
+  return { stats, calendar, calendarYears, calendarFetchedAt, statsFetchedAt: data?.statsFetchedAt };
+}
 
 function ProfileHeader({ icon, name, handle, href }) {
   return (
@@ -47,7 +82,36 @@ function Counter({ value, label }) {
 
 export default function Skills() {
   const sectionRef = useRef(null);
-  const { leetcode, codechef, github } = codingProfiles;
+  const [syncData, setSyncData] = useState(null);
+  const { codechef, github } = codingProfiles;
+  const leetcode = {
+    ...codingProfiles.leetcode,
+    solved: syncData?.stats?.total ?? codingProfiles.leetcode.solved,
+    breakdown: codingProfiles.leetcode.breakdown.map((difficulty) => ({
+      ...difficulty,
+      solved: syncData?.stats?.[difficulty.label.toLowerCase()] ?? difficulty.solved,
+    })),
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
+    fetch("/data/leetcode.json", { signal: controller.signal, cache: "no-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`LeetCode JSON returned HTTP ${response.status}.`);
+        return response.json();
+      })
+      .then((data) => setSyncData(readSyncedData(data)))
+      .catch((error) => {
+        if (error.name !== "AbortError") console.warn(`Could not load LeetCode sync data; using profile fallback counts. ${error.message}`);
+        setSyncData(readSyncedData(null));
+      })
+      .finally(() => window.clearTimeout(timeout));
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -79,7 +143,7 @@ export default function Skills() {
       );
     }, sectionRef);
     return () => ctx.revert();
-  }, []);
+  }, [leetcode.solved, codechef.solved, github.repos]);
 
   return (
     <section
@@ -161,7 +225,12 @@ export default function Skills() {
                 >
                   Submission Activity
                 </p>
-                <LeetCodeHeatmap solvedCount={leetcode.solved} />
+                <LeetCodeHeatmap
+                  solvedCount={leetcode.solved}
+                  calendar={syncData?.calendar ?? null}
+                  calendarYears={syncData?.calendarYears ?? null}
+                  calendarFetchedAt={syncData?.calendarFetchedAt ?? null}
+                />
               </div>
             </div>
           </div>
@@ -211,7 +280,11 @@ export default function Skills() {
           </div>
         </div>
 
-        <p className="mt-6 text-[11px] text-ash/70 text-right font-mono">Stats as of {codingProfiles.updated}</p>
+        <p className="mt-6 text-[11px] text-ash/70 text-right font-mono">
+          Stats as of {syncData?.stats && syncData.statsFetchedAt
+            ? new Date(syncData.statsFetchedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+            : codingProfiles.updated}
+        </p>
       </div>
     </section>
   );
