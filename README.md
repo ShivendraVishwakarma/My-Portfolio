@@ -66,6 +66,12 @@ On Windows PowerShell, use `Copy-Item .env.example .env.local`. Restart the Vite
 
 For deployment, add `VITE_CONTACT_ENDPOINT` in the project's environment-variable settings in Vercel or Netlify, using the same Formspree endpoint. Apply it to the production environment (and preview environments if you want contact submissions to work there), then trigger a new deployment. Do not upload `.env.local` to the host or commit it to Git.
 
+## Portfolio chatbot
+
+The floating **Ask Shivendra** chat sends messages to `/api/chat`, handled by the Vercel Node.js serverless function in `api/chat.js`. Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/app/apikey), then add it to your local `.env.local` as `GEMINI_API_KEY=your_actual_key`. Do not use the `VITE_` prefix: Vite exposes prefixed variables in browser bundles. Keep the key out of source control and documentation.
+
+For local frontend-only work, use `npm run dev`. To run the serverless function locally too, install/use the Vercel CLI and run `vercel dev` from the project root after linking the Vercel project and setting `GEMINI_API_KEY` in `.env.local`. The Vite dev server alone does not serve `/api/chat`. On Vercel, add `GEMINI_API_KEY` in **Project Settings → Environment Variables** for Production (and Preview/Development as needed), then redeploy. The key is read only by the serverless function.
+
 If no endpoint is configured, the existing mailto fallback opens the visitor's email app with a prefilled message; the visitor still needs to send it. When an endpoint is configured, success is shown only after the service responds successfully. Failed requests show an error and an **Email Direct** fallback.
 
 ### Contact form checks

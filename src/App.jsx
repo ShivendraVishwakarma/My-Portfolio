@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import Contact from "./components/Contact";
+import Chatbot from "./components/Chatbot";
 import Experience from "./components/Experience";
 import Hero from "./components/Hero";
 import LoadingScreen from "./components/LoadingScreen";
@@ -21,6 +22,7 @@ export default function App() {
     <>
       {loading && <LoadingScreen onComplete={onLoaded} />}
       {!loading && <ScrollProgress />}
+      {!loading && <Chatbot />}
       <div className="noise-overlay" aria-hidden="true" />
       {!loading && (
         <StaggeredMenu
