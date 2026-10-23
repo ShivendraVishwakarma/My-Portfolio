@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useSpring } from "framer-motion";
 import { projects, projectsIntro } from "../data/profile";
 import SplitText from "./SplitText";
 
@@ -37,20 +37,54 @@ const pad = (n) => String(n).padStart(2, "0");
 // Glass card: the card rises in, then its text slides from the side and the screenshot scales up
 function ProjectCard({ project, index, total }) {
   const reversed = index % 2 === 1;
+  const tiltX = useSpring(0, { stiffness: 190, damping: 24, mass: 0.6 });
+  const tiltY = useSpring(0, { stiffness: 190, damping: 24, mass: 0.6 });
+
+  const trackPointer = (event) => {
+    if (event.pointerType === "touch") return;
+    const card = event.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    tiltX.set((0.5 - y) * 7);
+    tiltY.set((x - 0.5) * 9);
+    card.style.setProperty("--project-spot-x", `${x * 100}%`);
+    card.style.setProperty("--project-spot-y", `${y * 100}%`);
+  };
+
+  const resetPointer = (event) => {
+    tiltX.set(0);
+    tiltY.set(0);
+    event.currentTarget.style.setProperty("--project-spot-x", "50%");
+    event.currentTarget.style.setProperty("--project-spot-y", "50%");
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 70 }}
       whileInView={{ opacity: 1, y: 0 }}
+      whileHover={{
+        y: -4,
+        scale: 1.008,
+        transition: { duration: 0.28, ease },
+      }}
+      onPointerMove={trackPointer}
+      onPointerLeave={resetPointer}
       viewport={viewport}
       transition={{ duration: 0.8, ease }}
-      className="relative rounded-2xl sm:rounded-[32px] bg-white/[0.04] border border-white/20 backdrop-blur-3xl overflow-hidden px-4 py-6 sm:px-10 sm:py-10 lg:px-14 lg:py-14 min-h-[380px] sm:min-h-[480px] lg:min-h-[530px] flex flex-col justify-center shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.25),inset_0_0_24px_rgba(255,255,255,0.03)] transform-gpu"
+      style={{ rotateX: tiltX, rotateY: tiltY, transformPerspective: 1200 }}
+      className="group/project relative rounded-2xl sm:rounded-[32px] bg-white/[0.04] border border-white/20 hover:border-ember/40 backdrop-blur-3xl overflow-hidden px-4 py-6 sm:px-10 sm:py-10 lg:px-14 lg:py-14 min-h-[380px] sm:min-h-[480px] lg:min-h-[530px] flex flex-col justify-center shadow-[0_20px_60px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.25),inset_0_0_24px_rgba(255,255,255,0.03)] hover:shadow-[0_28px_70px_rgba(0,0,0,0.72),0_0_32px_rgba(160,42,34,0.14),inset_0_1px_1px_rgba(255,255,255,0.25)] transition-[border-color,box-shadow] duration-300 transform-gpu"
     >
       <div className="absolute -top-24 -left-24 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 z-0 pointer-events-none opacity-0 group-hover/project:opacity-100 transition-opacity duration-300"
+        style={{ background: "radial-gradient(380px circle at var(--project-spot-x, 50%) var(--project-spot-y, 50%), rgba(252,107,47,0.16), transparent 68%)" }}
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-14 items-center">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-14 items-center">
         <motion.div
           initial={{ opacity: 0, x: reversed ? 45 : -45 }}
           whileInView={{ opacity: 1, x: 0 }}

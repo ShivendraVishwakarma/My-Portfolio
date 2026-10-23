@@ -175,12 +175,12 @@ html.lenis body {
 }
 
 /* -------------------------------------------------------------- chatbot */
-.chatbot { position: fixed; right: clamp(16px, 3vw, 36px); bottom: clamp(16px, 3vw, 32px); z-index: 10001; font-family: var(--font-body); }
+.chatbot { position: fixed; left: clamp(16px, 3vw, 36px); bottom: clamp(16px, 3vw, 32px); z-index: 10001; font-family: var(--font-body); }
 .chatbot-launcher { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 20px; border: 1px solid #ffffff30; border-radius: 999px; background: var(--ember); color: var(--white); box-shadow: 0 10px 36px #0009, 0 0 26px #a02a2240; font: 600 0.9rem var(--font-body); cursor: pointer; transition: background 0.2s, transform 0.2s, box-shadow 0.2s; }
-.chatbot-launcher:hover { background: var(--ember-bright); transform: translateY(-2px); box-shadow: 0 12px 40px #000a, 0 0 30px #a02a2260; }
+.chatbot-launcher:hover { background: var(--ember-bright); box-shadow: 0 12px 40px #000a, 0 0 30px #a02a2260; }
 .chatbot-launcher:focus-visible, .chatbot button:focus-visible, .chatbot textarea:focus-visible { outline: 2px solid #ff8b63; outline-offset: 3px; }
 .chatbot-launcher > span:first-child { font-size: 1.25rem; line-height: 1; }
-.chatbot-panel { position: absolute; right: 0; bottom: 66px; display: flex; flex-direction: column; width: min(390px, calc(100vw - 32px)); height: min(560px, calc(100dvh - 110px)); min-height: 350px; overflow: hidden; border: 1px solid #ffffff20; border-radius: 20px; background: #101012f7; box-shadow: 0 24px 80px #000c, 0 0 50px #a02a221c; -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); animation: 0.22s var(--ease-out-expo) both fade-in; }
+.chatbot-panel { position: absolute; left: 0; bottom: 66px; display: flex; flex-direction: column; width: min(390px, calc(100vw - 32px)); height: min(560px, calc(100dvh - 110px)); min-height: 350px; overflow: hidden; border: 1px solid #ffffff20; border-radius: 20px; background: #101012f7; box-shadow: 0 24px 80px #000c, 0 0 50px #a02a221c; -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); animation: 0.22s var(--ease-out-expo) both fade-in; }
 .chatbot-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid #ffffff14; background: linear-gradient(110deg, #a02a222b, transparent 75%); }
 .chatbot-kicker { color: #d87365; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.16em; }
 .chatbot-header h2 { margin: 5px 0 0; color: var(--white); font: 600 1.15rem var(--font-display); }
@@ -203,9 +203,9 @@ html.lenis body {
 .chatbot-footer { padding: 0 14px 12px; color: #aaaab0; text-align: center; font-size: 0.65rem; }
 .chatbot-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (max-width: 480px) {
-  .chatbot { right: 14px; bottom: 14px; }
+  .chatbot { right: 14px; left: auto; bottom: 94px; }
   .chatbot-launcher { min-height: 48px; padding: 0 16px; }
-  .chatbot-panel { right: -4px; bottom: 60px; width: calc(100vw - 20px); height: min(560px, calc(100dvh - 90px)); min-height: 320px; }
+  .chatbot-panel { right: -4px; left: auto; bottom: 60px; width: calc(100vw - 20px); height: min(560px, calc(100dvh - 90px)); min-height: 320px; }
 }
 
 /* ---------------------------------------------------------------- loader */

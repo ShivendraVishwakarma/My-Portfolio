@@ -18,6 +18,7 @@ export default function TextPressure({
   flex = true,
   stroke = false,
   scale = false,
+  strokeWidth = 1.1,
   textColor = "#FFFFFF",
   strokeColor = "#FF0000",
   className = "",
@@ -93,15 +94,27 @@ export default function TextPressure({
 
   useEffect(() => {
     let timeout;
+    let active = true;
     const debounced = () => {
       clearTimeout(timeout);
       timeout = setTimeout(setSize, 100);
     };
     debounced();
     window.addEventListener("resize", debounced);
+    const resizeObserver = containerRef.current && typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(debounced)
+      : null;
+    if (containerRef.current) resizeObserver?.observe(containerRef.current);
+    document.fonts?.ready.then(() => {
+      if (active) debounced();
+    });
+    document.fonts?.addEventListener("loadingdone", debounced);
     return () => {
+      active = false;
       clearTimeout(timeout);
       window.removeEventListener("resize", debounced);
+      resizeObserver?.disconnect();
+      document.fonts?.removeEventListener("loadingdone", debounced);
     };
   }, [setSize]);
 
@@ -125,9 +138,11 @@ export default function TextPressure({
           const cy = rect.top + rect.height / 2;
           const d = Math.hypot(cx - cursor.current.x, cy - cursor.current.y);
 
-          const wdth = width ? Math.floor(attribute(d, maxDist, isMobile ? 25 : 5, isMobile ? 165 : 200)) : 100;
-          const wght = weight ? Math.floor(attribute(d, maxDist, 100, 900)) : 400;
-          const ital = italic ? attribute(d, maxDist, 0, 1).toFixed(2) : "0";
+          const wdth = width
+            ? Math.round(attribute(d, maxDist, isMobile ? 86 : 76, isMobile ? 130 : 142))
+            : 100;
+          const wght = weight ? Math.round(attribute(d, maxDist, isMobile ? 360 : 320, 760)) : 400;
+          const ital = italic ? attribute(d, maxDist, 0.08, 0.62).toFixed(2) : "0";
           const opacity = alpha ? attribute(d, maxDist, 0, 1).toFixed(2) : "1";
 
           const settings = `'wght' ${wght}, 'wdth' ${wdth}, 'ital' ${ital}`;
@@ -161,7 +176,7 @@ export default function TextPressure({
           top: 0;
           color: transparent;
           z-index: -1;
-          -webkit-text-stroke-width: 3px;
+          -webkit-text-stroke-width: ${strokeWidth}px;
           -webkit-text-stroke-color: ${strokeColor};
         }
         .text-pressure-title {

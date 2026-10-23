@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { gsap } from "../lib/gsap";
 
 const greeting = {
   role: "assistant",
@@ -13,7 +14,33 @@ export default function Chatbot() {
   const [error, setError] = useState("");
   const inputRef = useRef(null);
   const triggerRef = useRef(null);
+  const triggerLabelRef = useRef(null);
   const transcriptRef = useRef(null);
+
+  useEffect(() => {
+    const button = triggerRef.current;
+    const label = triggerLabelRef.current;
+    if (!button || !label || "ontouchstart" in window) return undefined;
+
+    const onMove = (event) => {
+      const rect = button.getBoundingClientRect();
+      const dx = event.clientX - rect.left - rect.width / 2;
+      const dy = event.clientY - rect.top - rect.height / 2;
+      gsap.to(button, { x: dx * 0.35, y: dy * 0.35, duration: 0.4, ease: "power2.out" });
+      gsap.to(label, { x: dx * 0.175, y: dy * 0.175, duration: 0.4, ease: "power2.out" });
+    };
+    const onLeave = () => {
+      gsap.to([button, label], { x: 0, y: 0, duration: 0.6, ease: "back.out(1.7)" });
+    };
+
+    button.addEventListener("mousemove", onMove);
+    button.addEventListener("mouseleave", onLeave);
+    return () => {
+      button.removeEventListener("mousemove", onMove);
+      button.removeEventListener("mouseleave", onLeave);
+      gsap.killTweensOf([button, label]);
+    };
+  }, []);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -136,7 +163,7 @@ export default function Chatbot() {
         onClick={() => setOpen((current) => !current)}
       >
         <span aria-hidden="true">{open ? "×" : "✦"}</span>
-        <span className="chatbot-launcher-text">{open ? "Close chat" : "Ask Shivendra"}</span>
+        <span ref={triggerLabelRef} className="chatbot-launcher-text">{open ? "Close chat" : "Ask Shivendra"}</span>
       </button>
     </div>
   );

@@ -37,7 +37,7 @@ export const socials = [
 
 export const hero = {
   eyebrow: "Building Responsive Web Apps.",
-  tagline: "MCA Student · React Developer · Problem Solver",
+  tagline: "MCA Student · React Developer · Interface Builder",
   description:
     "MCA student and Frontend (React) Intern at ConsultIT Technologies, building scalable, responsive web applications with React.js, Node.js, Express.js and MongoDB.",
 };
@@ -108,6 +108,34 @@ export const skills = [
   { group: "Concepts", items: ["DBMS", "OOP", "Clean Architecture"] },
 ];
 
+export const skillDescriptions = {
+  "C++": "A compiled language for building fast, efficient software.",
+  JavaScript: "The language that brings interactivity to web pages and apps.",
+  SQL: "A language for querying and managing relational databases.",
+  Python: "A readable, general-purpose language used across many fields.",
+  Java: "An object-oriented language used for applications across platforms.",
+  "React.js": "Builds user interfaces from reusable components.",
+  "Node.js": "Runs JavaScript outside the browser, including on servers.",
+  "Express.js": "A lightweight framework for building Node.js web servers and APIs.",
+  "Tailwind CSS": "Styles interfaces with small, composable utility classes.",
+  Bootstrap: "A UI toolkit with responsive layouts and ready-made components.",
+  MySQL: "A relational database for storing data in structured tables.",
+  MongoDB: "A document database that stores data in flexible JSON-like records.",
+  Git: "Tracks code changes and helps manage versions of a project.",
+  GitHub: "Hosts Git repositories for sharing and collaborating on code.",
+  "VS Code": "A code editor with tools for writing and debugging software.",
+  Postman: "Helps create, send, and inspect API requests.",
+  "AWS EC2": "Provides virtual servers for running applications in the cloud.",
+  Lambda: "Runs code on demand without managing servers.",
+  S3: "Stores and retrieves files as scalable cloud objects.",
+  Redshift: "A cloud data warehouse for analyzing large datasets with SQL.",
+  CloudFront: "Delivers websites and files quickly through a global edge network.",
+  IAM: "Controls access to AWS users, services, and resources.",
+  DBMS: "Software for organizing, querying, and maintaining databases.",
+  OOP: "Organizes software around objects that combine data and behavior.",
+  "Clean Architecture": "Structures software so core logic stays independent of tools.",
+};
+
 // Solved-question counts captured from the public profiles
 export const codingProfiles = {
   updated: "Oct 2026",
@@ -139,7 +167,7 @@ export const experienceIntro = {
   subtitle: "My professional and academic journey so far.",
 };
 
-export const experience = [
+const experienceAndCertifications = [
   {
     period: "Feb 2026 — May 2026",
     company: "ConsultIT Technologies · Greater Noida",
@@ -180,6 +208,42 @@ export const experience = [
   },
 ];
 
+const schoolTimelineEntries = [
+  {
+    period: "2018 â€” 2019",
+    company: "S R Inter College",
+    role: "Class 12th",
+    summary: "Completed higher secondary education.",
+    points: [],
+  },
+  {
+    period: "2016 â€” 2017",
+    company: "S R Inter College",
+    role: "Class 10th",
+    summary: "Completed secondary education.",
+    points: [],
+  },
+];
+
+const timelineEntries = experienceAndCertifications.flatMap((item) => item.role === "Bachelor of Arts (B.A.)"
+  ? [{ ...item, points: [] }, ...schoolTimelineEntries]
+  : [item]);
+const certificationEntry = experienceAndCertifications.find((item) => item.role === "Continuous Learning");
+export const experience = timelineEntries.filter((item) => item.role !== "Continuous Learning");
+export const certificationsIntro = {
+  label: "Certifications",
+  title: "Learning in Practice",
+  subtitle: "Courses and credentials that support my work across frontend and full-stack development.",
+};
+export const certifications = certificationEntry.points.map((credential) => ({ credential }));
+export const featuredAchievement = {
+  event: "HackerRank Orchestrate",
+  edition: "August 2026",
+  achievement: "Built and deployed an AI agent",
+  rank: 274,
+  participants: 1983,
+};
+
 export const contactIntro = {
   label: "Get in Touch",
   title: "Let's Create Something Extraordinary",
@@ -190,5 +254,6 @@ export const menuItems = [
   { label: "Projects", ariaLabel: "Go to Projects section", link: "#projects" },
   { label: "Skills", ariaLabel: "Go to Skills and coding profiles", link: "#skills" },
   { label: "Experience", ariaLabel: "Go to Experience section", link: "#experience" },
+  { label: "Certifications", ariaLabel: "Go to Certifications section", link: "#certifications" },
   { label: "Contact", ariaLabel: "Go to Contact section", link: "#contact" },
 ];

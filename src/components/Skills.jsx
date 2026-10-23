@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "../lib/gsap";
-import { codingProfiles, skills, skillsIntro } from "../data/profile";
+import { codingProfiles, skillDescriptions, skills, skillsIntro } from "../data/profile";
 import LeetCodeHeatmap from "./LeetCodeHeatmap";
 
 const josefin = { fontFamily: "var(--font-josefin), 'Josefin Sans', sans-serif" };
@@ -81,6 +81,7 @@ function Counter({ value, label }) {
 }
 
 export default function Skills() {
+  const [activeSkill, setActiveSkill] = useState(null);
   const sectionRef = useRef(null);
   const [syncData, setSyncData] = useState(null);
   const [githubSyncData, setGithubSyncData] = useState(null);
@@ -334,15 +335,32 @@ export default function Skills() {
                 <p className="text-[11px] text-ember uppercase tracking-wider mb-3 font-semibold">{s.group}</p>
                 <div className="flex flex-wrap gap-2">
                   {s.items.map((item) => (
-                    <span
+                    <button
                       key={item}
-                      className="px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold tracking-wider text-white uppercase bg-white/[0.06] border border-white/15 hover:border-ember/50 hover:text-ember transition-colors"
+                      type="button"
+                      aria-expanded={activeSkill === item}
+                      aria-controls={`skill-description-${s.group.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                      onMouseEnter={() => setActiveSkill(item)}
+                      onMouseLeave={(event) => {
+                        if (document.activeElement !== event.currentTarget) setActiveSkill(null);
+                      }}
+                      onFocus={() => setActiveSkill(item)}
+                      onBlur={() => setActiveSkill(null)}
+                      onClick={() => setActiveSkill(item)}
+                      className="px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold tracking-wider text-white uppercase bg-white/[0.06] border border-white/15 cursor-pointer transition-colors duration-200 hover:border-ember/60 hover:bg-ember/10 hover:text-white hover:shadow-[0_4px_18px_rgba(160,42,34,0.2)] focus-visible:border-ember/60 focus-visible:bg-ember/10 focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/70 focus-visible:shadow-[0_4px_18px_rgba(160,42,34,0.2)]"
                       style={josefin}
                     >
                       {item}
-                    </span>
+                    </button>
                   ))}
                 </div>
+                <p
+                  id={`skill-description-${s.group.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                  className={`h-14 overflow-hidden pt-2 text-xs leading-relaxed text-ash transition-opacity duration-200 ${s.items.includes(activeSkill) ? "opacity-100" : "opacity-0"}`}
+                  aria-live="polite"
+                >
+                  {s.items.includes(activeSkill) ? skillDescriptions[activeSkill] : " "}
+                </p>
               </div>
             ))}
           </div>

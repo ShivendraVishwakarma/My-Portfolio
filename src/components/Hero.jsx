@@ -245,20 +245,22 @@ export default function Hero() {
         className="absolute top-[25%] sm:top-[28%] md:top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[15] pointer-events-none select-none w-full flex flex-col items-center justify-center px-4"
         aria-hidden="true"
       >
-        <div className="w-full max-w-[700px] md:max-w-[850px] h-[52px] sm:h-[80px] md:h-[135px] relative flex items-center justify-center scale-y-[1.15] transform-gpu drop-shadow-[0_0_35px_rgba(252,107,47,0.3)]">
+        <div className="w-full max-w-[700px] md:max-w-[850px] h-[52px] sm:h-[80px] md:h-[135px] relative flex items-center justify-center drop-shadow-[0_0_24px_rgba(252,107,47,0.18)]">
           <TextPressure
             text={profile.heroWord}
             flex
             alpha={false}
-            stroke={false}
+            stroke
+            strokeWidth={1.1}
+            strokeColor="rgba(252, 107, 47, 0.72)"
             width
             weight
             italic
-            textColor="rgba(255, 255, 255, 0.88)"
+            textColor="#fff4ec"
             minFontSize={16}
           />
         </div>
-        <div ref={taglineRef} className="mt-12 sm:mt-2.5 md:mt-4 text-center z-[20] px-2">
+        <div ref={taglineRef} className="mt-10 sm:mt-8 md:mt-8 w-full max-w-[850px] text-center z-[20] px-2">
           <p
             className="hero-line text-[clamp(0.55rem,2.2vw,0.88rem)] md:text-[clamp(0.72rem,1.08vw,0.88rem)] font-extrabold tracking-[0.12em] sm:tracking-[0.25em] uppercase text-ember drop-shadow-[0_0_20px_rgba(252,107,47,0.7)]"
             style={{ fontFamily: "var(--font-poppins), sans-serif" }}

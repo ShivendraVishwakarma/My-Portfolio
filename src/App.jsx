@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import Certifications from "./components/Certifications";
 import Contact from "./components/Contact";
 import Chatbot from "./components/Chatbot";
 import Experience from "./components/Experience";
@@ -44,6 +45,7 @@ export default function App() {
           <Projects />
           <Skills />
           <Experience />
+          <Certifications />
           <Contact />
         </main>
       </SmoothScroll>
