@@ -83,6 +83,8 @@ function Counter({ value, label }) {
 export default function Skills() {
   const sectionRef = useRef(null);
   const [syncData, setSyncData] = useState(null);
+  const [githubSyncData, setGithubSyncData] = useState(null);
+  const [activeProfile, setActiveProfile] = useState("leetcode");
   const { codechef, github } = codingProfiles;
   const leetcode = {
     ...codingProfiles.leetcode,
@@ -114,6 +116,51 @@ export default function Skills() {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
+    fetch(`https://github-contributions-api.jogruber.de/v4/${github.handle}?y=last`, {
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`GitHub contributions returned HTTP ${response.status}.`);
+        return response.json();
+      })
+      .then((data) => {
+        const contributions = Array.isArray(data?.contributions)
+          ? data.contributions.filter(
+              (entry) =>
+                typeof entry?.date === "string" &&
+                Number.isSafeInteger(entry?.count) &&
+                entry.count >= 0 &&
+                !Number.isNaN(Date.parse(entry.date)),
+            )
+          : [];
+        const calendar = Object.fromEntries(
+          contributions.map((entry) => [
+            Math.floor(Date.parse(`${entry.date}T00:00:00Z`) / 1000),
+            entry.count,
+          ]),
+        );
+        setGithubSyncData({
+          calendar,
+          total: Number.isSafeInteger(data?.total?.lastYear) ? data.total.lastYear : null,
+          fetchedAt: new Date().toISOString(),
+        });
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          console.warn(`Could not load GitHub contributions; showing an empty activity grid. ${error.message}`);
+        }
+        setGithubSyncData({ calendar: {}, total: null, fetchedAt: null });
+      })
+      .finally(() => window.clearTimeout(timeout));
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [github.handle]);
+
+  useEffect(() => {
     const ctx = gsap.context(() => {
       const trigger = { trigger: sectionRef.current, start: "top 75%", toggleActions: "play none none none" };
 
@@ -143,7 +190,7 @@ export default function Skills() {
       );
     }, sectionRef);
     return () => ctx.revert();
-  }, [leetcode.solved, codechef.solved, github.repos]);
+  }, [activeProfile, leetcode.solved, codechef.solved, github.repos]);
 
   return (
     <section
@@ -178,43 +225,61 @@ export default function Skills() {
 
         {/* Coding profiles */}
         <div className="space-y-6 md:space-y-8 mb-6 md:mb-8">
-          {/* LeetCode – full width with heatmap */}
+          {/* Coding profile – full width with heatmap */}
           <div className="skills-animate glass-card p-5 sm:p-8">
             <div className="flex flex-col lg:flex-row lg:items-start lg:gap-10">
               {/* Left: header + counter + difficulty bars */}
               <div className="lg:w-64 shrink-0">
-                <ProfileHeader
-                  icon="https://cdn.simpleicons.org/leetcode/ffffff"
-                  name="LeetCode"
-                  handle={leetcode.handle}
-                  href={leetcode.href}
-                />
-                <Counter value={leetcode.solved} label="Questions solved" />
-                <div className="mt-6 space-y-4">
-                  {leetcode.breakdown.map((d) => (
-                    <div key={d.label}>
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span className="font-semibold" style={{ color: d.color }}>
-                          {d.label}
-                        </span>
-                        <span className="text-ash font-mono">
-                          <span className="text-white font-semibold">{d.solved}</span> / {d.total}
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-                        <div
-                          data-bar=""
-                          className="h-full rounded-full origin-left"
-                          style={{
-                            width: `${Math.max(2, (d.solved / leetcode.solved) * 100)}%`,
-                            background: d.color,
-                            boxShadow: `0 0 12px ${d.color}66`,
-                          }}
-                        />
-                      </div>
-                    </div>
+                <div className="flex items-center gap-1 p-1 mb-6 rounded-lg bg-white/5 border border-white/10" role="tablist" aria-label="Activity profile">
+                  {["leetcode", "github"].map((profile) => (
+                    <button
+                      key={profile}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeProfile === profile}
+                      onClick={() => setActiveProfile(profile)}
+                      className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                        activeProfile === profile ? "bg-ember text-white" : "text-ash hover:text-white"
+                      }`}
+                    >
+                      {profile}
+                    </button>
                   ))}
                 </div>
+                {activeProfile === "leetcode" ? (
+                  <>
+                    <ProfileHeader
+                      icon="https://cdn.simpleicons.org/leetcode/ffffff"
+                      name="LeetCode"
+                      handle={leetcode.handle}
+                      href={leetcode.href}
+                    />
+                    <Counter key={activeProfile} value={leetcode.solved} label="Questions solved" />
+                    <div className="mt-6 space-y-4">
+                      {leetcode.breakdown.map((d) => (
+                        <div key={d.label}>
+                          <div className="flex justify-between text-xs mb-1.5">
+                            <span className="font-semibold" style={{ color: d.color }}>{d.label}</span>
+                            <span className="text-ash font-mono"><span className="text-white font-semibold">{d.solved}</span> / {d.total}</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                            <div data-bar="" className="h-full rounded-full origin-left" style={{ width: `${Math.max(2, (d.solved / leetcode.solved) * 100)}%`, background: d.color, boxShadow: `0 0 12px ${d.color}66` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ProfileHeader
+                      icon="https://cdn.simpleicons.org/github/ffffff"
+                      name="GitHub"
+                      handle={github.handle}
+                      href={github.href}
+                    />
+                    <Counter key={activeProfile} value={githubSyncData?.total ?? 0} label="Contributions last year" />
+                  </>
+                )}
               </div>
 
               {/* Right: heatmap */}
@@ -223,13 +288,16 @@ export default function Skills() {
                   className="text-[11px] text-ash uppercase tracking-wider font-semibold mb-1"
                   style={{ letterSpacing: "0.2em" }}
                 >
-                  Submission Activity
+                  {activeProfile === "leetcode" ? "Submission Activity" : "Contribution Activity"}
                 </p>
                 <LeetCodeHeatmap
-                  solvedCount={leetcode.solved}
-                  calendar={syncData?.calendar ?? null}
-                  calendarYears={syncData?.calendarYears ?? null}
-                  calendarFetchedAt={syncData?.calendarFetchedAt ?? null}
+                  key={activeProfile}
+                  solvedCount={activeProfile === "leetcode" ? leetcode.solved : githubSyncData?.total ?? 0}
+                  calendar={activeProfile === "leetcode" ? syncData?.calendar : githubSyncData?.calendar}
+                  calendarYears={activeProfile === "leetcode" ? syncData?.calendarYears : null}
+                  calendarFetchedAt={activeProfile === "leetcode" ? syncData?.calendarFetchedAt : githubSyncData?.fetchedAt}
+                  activityLabel={activeProfile === "leetcode" ? "submission" : "contribution"}
+                  fallbackData={activeProfile === "leetcode"}
                 />
               </div>
             </div>

@@ -125,6 +125,7 @@ function levelColor(count) {
 const DAY_LABELS = ["Mon", "", "Wed", "", "Fri", "", "Sun"];
 const CELL = 13;
 const GAP = 3;
+const GRID_COLUMNS = 53;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function LeetCodeHeatmap({
@@ -132,6 +133,8 @@ export default function LeetCodeHeatmap({
   calendar = null,
   calendarYears = null,
   calendarFetchedAt = null,
+  activityLabel = "submission",
+  fallbackData = true,
 }) {
   const [days, setDays] = useState([]);
   const [monthLabels, setMonthLabels] = useState([]);
@@ -145,7 +148,7 @@ export default function LeetCodeHeatmap({
 
   useEffect(() => {
     const hasRealCalendar = calendar && typeof calendar === "object" && Object.keys(calendar).length > 0;
-    const map = hasRealCalendar ? calendar : generateFallbackData(solvedCount);
+    const map = hasRealCalendar ? calendar : fallbackData ? generateFallbackData(solvedCount) : {};
     const grid = buildGrid(map, hasRealCalendar ? calendarYears : null);
 
     let s = 0;
@@ -162,7 +165,7 @@ export default function LeetCodeHeatmap({
     setTotalActive(active);
     setMaxDay(mx);
     setIsRealCalendar(Boolean(hasRealCalendar));
-  }, [solvedCount, calendar, calendarYears, calendarFetchedAt]);
+  }, [solvedCount, calendar, calendarYears, calendarFetchedAt, fallbackData]);
 
   // GSAP entrance animation
   useEffect(() => {
@@ -188,8 +191,8 @@ export default function LeetCodeHeatmap({
     return () => ctx.revert();
   }, [days]);
 
-  const numCols = days.length > 0 ? Math.ceil(days.length / 7) : 53;
-  const gridW = numCols * (CELL + GAP) - GAP;
+  const numCols = GRID_COLUMNS;
+  const gridW = GRID_COLUMNS * (CELL + GAP) - GAP;
 
   if (!days.length) {
     return (
@@ -323,8 +326,8 @@ export default function LeetCodeHeatmap({
                             y: e.clientY,
                             label:
                               day.count === 0
-                                ? `No submissions — ${dateStr}`
-                                : `${day.count} submission${day.count > 1 ? "s" : ""} — ${dateStr}`,
+                                ? `No ${activityLabel}s — ${dateStr}`
+                                : `${day.count} ${activityLabel}${day.count > 1 ? "s" : ""} — ${dateStr}`,
                           });
                         }}
                         onMouseLeave={(e) => {
@@ -366,8 +369,9 @@ export default function LeetCodeHeatmap({
         <div
           style={{
             position: "fixed",
-            left: tooltip.x + 12,
-            top: tooltip.y - 36,
+            left: Math.max(8, Math.min(tooltip.x + 12, window.innerWidth - 300)),
+            top: Math.max(8, Math.min(tooltip.y - 36, window.innerHeight - 64)),
+            maxWidth: "calc(100vw - 16px)",
             zIndex: 9999,
             pointerEvents: "none",
             background: "rgba(14,14,16,0.96)",
@@ -377,7 +381,7 @@ export default function LeetCodeHeatmap({
             fontSize: 11,
             color: "#e8e8ea",
             fontFamily: "monospace",
-            whiteSpace: "nowrap",
+            whiteSpace: "normal",
             backdropFilter: "blur(10px)",
             boxShadow: "0 4px 24px rgba(0,0,0,0.6)",
           }}
