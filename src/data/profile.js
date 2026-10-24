@@ -192,7 +192,7 @@ const experienceAndCertifications = [
     company: "Bundelkhand University",
     role: "Bachelor of Arts (B.A.)",
     summary: "Undergraduate degree, followed by a move into computer applications and web development.",
-    points: ["Class 12th — S R Inter College (2018 — 2019)", "Class 10th — S R Inter College (2016 — 2017)"],
+    points: ["Class 12th — S R Inter College (2017 — 2018)", "Class 10th — S R Inter College (2015 — 2016)"],
   },
   {
     period: "Certifications",
@@ -210,14 +210,14 @@ const experienceAndCertifications = [
 
 const schoolTimelineEntries = [
   {
-    period: "2018 â€” 2019",
+    period: "2017 — 2018",
     company: "S R Inter College",
     role: "Class 12th",
     summary: "Completed higher secondary education.",
     points: [],
   },
   {
-    period: "2016 â€” 2017",
+    period: "2015 — 2016",
     company: "S R Inter College",
     role: "Class 10th",
     summary: "Completed secondary education.",
